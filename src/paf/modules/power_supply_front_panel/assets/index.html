@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VISA Power Supply Control Panel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>⚡ Power Supply Control Panel</h1>
+            <div class="status-bar">
+                <span class="status-item">
+                    <span class="label">Connection:</span>
+                    <span id="connection-status" class="status-value disconnected">Disconnected</span>
+                </span>
+                <span class="status-item">
+                    <span class="label">Output:</span>
+                    <span id="output-status" class="status-value">Off</span>
+                </span>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Connection Section -->
+            <section class="control-section">
+                <h2>Connection</h2>
+                <div class="button-group">
+                    <button id="connect-btn" class="btn btn-primary" onclick="connectPowerSupply()">Connect</button>
+                    <button id="disconnect-btn" class="btn btn-secondary" onclick="disconnectPowerSupply()" disabled>Disconnect</button>
+                    <button id="identify-btn" class="btn btn-info" onclick="identifyDevice()" disabled>Identify Device</button>
+                </div>
+            </section>
+
+            <!-- Voltage Control Section -->
+            <section class="control-section">
+                <h2>Voltage Control</h2>
+                <div class="control-group">
+                    <label for="voltage-input">Voltage (V):</label>
+                    <div class="input-group">
+                        <input type="range" id="voltage-slider" min="0" max="30" step="0.1" value="0" 
+                               oninput="updateVoltageDisplay()" onchange="setVoltage()">
+                        <input type="number" id="voltage-input" min="0" max="30" step="0.1" value="0" 
+                               onchange="setVoltageFromInput()">
+                        <span class="unit">V</span>
+                    </div>
+                    <div class="display-value" id="voltage-display">0.0 V</div>
+                </div>
+            </section>
+
+            <!-- Current Control Section -->
+            <section class="control-section">
+                <h2>Current Control</h2>
+                <div class="control-group">
+                    <label for="current-input">Current Limit (A):</label>
+                    <div class="input-group">
+                        <input type="range" id="current-slider" min="0" max="5" step="0.01" value="0" 
+                               oninput="updateCurrentDisplay()" onchange="setCurrent()">
+                        <input type="number" id="current-input" min="0" max="5" step="0.01" value="0" 
+                               onchange="setCurrentFromInput()">
+                        <span class="unit">A</span>
+                    </div>
+                    <div class="display-value" id="current-display">0.0 A</div>
+                </div>
+            </section>
+
+            <!-- Output Control Section -->
+            <section class="control-section">
+                <h2>Output Control</h2>
+                <div class="button-group">
+                    <button id="output-on-btn" class="btn btn-success" onclick="enableOutput()" disabled>Output ON</button>
+                    <button id="output-off-btn" class="btn btn-danger" onclick="disableOutput()" disabled>Output OFF</button>
+                </div>
+            </section>
+
+            <!-- Protection Settings Section -->
+            <section class="control-section">
+                <h2>Protection Settings</h2>
+                <div class="protection-grid">
+                    <div class="control-group">
+                        <label for="ovp-input">Over-Voltage Protection (V):</label>
+                        <div class="input-group">
+                            <input type="number" id="ovp-input" min="0" max="35" step="0.1" value="15" onchange="setOVP()">
+                            <span class="unit">V</span>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label for="ocp-input">Over-Current Protection (A):</label>
+                        <div class="input-group">
+                            <input type="number" id="ocp-input" min="0" max="6" step="0.01" value="5" onchange="setOCP()">
+                            <span class="unit">A</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Measurement Section -->
+            <section class="control-section">
+                <h2>Measurements</h2>
+                <div class="measurement-grid">
+                    <div class="measurement-box">
+                        <div class="measurement-label">Voltage</div>
+                        <div class="measurement-value" id="meas-voltage">0.00 V</div>
+                    </div>
+                    <div class="measurement-box">
+                        <div class="measurement-label">Current</div>
+                        <div class="measurement-value" id="meas-current">0.00 A</div>
+                    </div>
+                    <div class="measurement-box">
+                        <div class="measurement-label">Power</div>
+                        <div class="measurement-value" id="meas-power">0.00 W</div>
+                    </div>
+                </div>
+                <button class="btn btn-info" onclick="measureNow()" disabled id="measure-btn">Measure Now</button>
+            </section>
+
+            <!-- System Control Section -->
+            <section class="control-section bottom-section">
+                <h2>System Control</h2>
+                <div class="button-group">
+                    <button class="btn btn-warning" onclick="showLogs()">View Logs</button>
+                    <button class="btn btn-danger" onclick="shutdownApplication()">Shutdown Application</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Log Modal -->
+        <div id="log-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeLogs()">&times;</span>
+                <h2>System Log</h2>
+                <div id="log-container" class="log-container"></div>
+                <button class="btn btn-primary" onclick="closeLogs()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

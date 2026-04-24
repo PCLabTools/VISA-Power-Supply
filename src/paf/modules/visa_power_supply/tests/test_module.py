@@ -23,6 +23,33 @@ class DummyVISAPowerSupply(BaseVISAPowerSupply):
         while self.background_task_running:
             time.sleep(0.01)
 
+    def message_connect(self, message: Message) -> bool:
+        return False
+
+    def message_disconnect(self, message: Message) -> bool:
+        return False
+
+    def message_identify(self, message: Message) -> bool:
+        return False
+
+    def message_set_voltage(self, message: Message) -> bool:
+        return False
+
+    def message_set_current(self, message: Message) -> bool:
+        return False
+
+    def message_toggle_output(self, message: Message) -> bool:
+        return False
+
+    def message_set_ovp(self, message: Message) -> bool:
+        return False
+
+    def message_set_ocp(self, message: Message) -> bool:
+        return False
+
+    def message_measure(self, message: Message) -> bool:
+        return False
+
     def message_custom_action(self, message: Message) -> bool:
         return False
 

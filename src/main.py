@@ -19,7 +19,7 @@ class Main:
         self.address = "main"
         self.protocol = Protocol(self.address)
 
-        PowerSupplyFrontPanel("power_supply_front_panel", self.protocol, debug=self.debug)
+        PowerSupplyFrontPanel("power_supply_front_panel", self.protocol, debug=self.debug, power_supply_address="visa_power_supply", main_module_address=self.address)
         VISAPowerSupply("visa_power_supply", self.protocol, debug=self.debug, implementation_type="simulated")
 
     def __del__(self):
@@ -32,9 +32,11 @@ class Main:
         """
         if self.debug: print(f"{self.__class__.__name__} ({self.address}): Starting main application loop.")
 
-        self.protocol.send_action("visa_power_supply", "custom_action", {"data": "Main test action"})
+        self.protocol.send_action("visa_power_supply", "connect", {"address": self.address})
 
-        print(f"\033[92mMain application loop has started. Press Ctrl+C to exit.\033[0m")
+        self.protocol.send_action("power_supply_front_panel", "start")
+
+        print(f"\033[92mPower supply control application running. Access it at http://localhost:5000. Press Ctrl+C to exit.\033[0m")
 
         while True:
             try:
@@ -60,6 +62,7 @@ class Main:
         if self.debug: print(f"{self.__class__.__name__} ({self.address}): Handling message: {message}")
         if message.command == "shutdown":
             if self.debug: print(f"{self.__class__.__name__} ({self.address}): Received shutdown command. Shutting down.")
+            self.protocol.send_action("visa_power_supply", "disconnect")
             self.protocol.broadcast_message("shutdown")
             try:
                 self.protocol.receive_message(self.address, timeout=5)  # Wait for acknowledgments
