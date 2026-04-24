@@ -1,0 +1,3 @@
+[submodule "src/paf/communication"]
+	path = src/paf/communication
+	url = https://github.com/PCLabTools/PAF-Communication-Protocol.git

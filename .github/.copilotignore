@@ -1,0 +1,11 @@
+# Human README
+README.md
+
+# Build outputs
+build/**
+dist/**
+**/__pycache__/**
+**/*.pyc
+
+# IDE and editor files
+.vscode/**
