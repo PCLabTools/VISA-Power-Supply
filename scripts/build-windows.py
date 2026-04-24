@@ -100,6 +100,8 @@ def run_pyinstaller(
 ) -> bool:
     print()
     print("Running PyInstaller...")
+    web_assets_src = repo_root / "src" / "paf" / "modules" / "power_supply_front_panel" / "assets"
+    web_assets_dest = "paf/modules/power_supply_front_panel/assets"
     result = run_command(
         [
             python_exe,
@@ -118,6 +120,8 @@ def run_pyinstaller(
             str(build_dir),
             "--paths",
             str(repo_root / "src"),
+            "--add-data",
+            f"{web_assets_src};{web_assets_dest}",
             "--collect-submodules",
             "paf",
             str(main_py),
