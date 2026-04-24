@@ -16,7 +16,7 @@ python src/main.py
 
 Once the application starts, open your web browser and navigate to:
 
-```
+```text
 http://localhost:5000
 ```
 
@@ -25,44 +25,52 @@ You should see a beautiful power supply control panel with all controls ready to
 ## Features Available in Web UI
 
 ### 1. **Connection Management**
+
 - **Connect** - Establish connection to the power supply
 - **Disconnect** - Close the connection
 - **Identify Device** - Query device information (model, serial number)
 
 ### 2. **Voltage Control**
+
 - Slider for smooth voltage adjustment (0-30V)
 - Numeric input for precise voltage entry
 - Real-time display of set voltage
 
 ### 3. **Current Control**
+
 - Slider for current limit adjustment (0-5A)
 - Numeric input for precise current entry
 - Real-time display of set current limit
 
 ### 4. **Output Management**
+
 - **Output ON** - Enable power supply output
 - **Output OFF** - Disable power supply output
 - Status indicator showing current output state
 
 ### 5. **Protection Settings**
+
 - Over-Voltage Protection (OVP) threshold setting
 - Over-Current Protection (OCP) threshold setting
 - Default values: OVP=15V, OCP=5A
 
 ### 6. **Real-Time Measurements**
+
 - Voltage reading (updates automatically every 2 seconds)
 - Current reading (updates automatically every 2 seconds)
 - Power reading (calculated from V × I)
 - Manual refresh available with "Measure Now" button
 
 ### 7. **System Control**
+
 - **View Logs** - Open system activity log with color-coded entries
 - **Shutdown Application** - Safely shutdown the entire application
 
 ## Technical Details
 
 ### Architecture
-```
+
+```text
 Browser (HTML/CSS/JS)
     ↓ (HTTP Requests)
 Webserver (http.server)
@@ -77,6 +85,7 @@ VISAPowerSupply Module (Simulated)
 All API calls use POST to `http://localhost:5000/api/`
 
 #### Power Supply Commands
+
 - `power-supply/connect` - Connect device
 - `power-supply/disconnect` - Disconnect device
 - `power-supply/identify` - Get device info
@@ -88,6 +97,7 @@ All API calls use POST to `http://localhost:5000/api/`
 - `power-supply/measure` - Get measurements
 
 #### System Commands
+
 - `shutdown` - Broadcast shutdown signal
 
 ### Response Format
@@ -107,7 +117,7 @@ All responses are JSON:
 
 ## File Structure
 
-```
+```text
 src/paf/modules/power_supply_front_panel/
 ├── module.py                 # Main module with webserver
 ├── __init__.py
@@ -143,6 +153,7 @@ src/paf/modules/power_supply_front_panel/
 ## Troubleshooting
 
 ### Port Already in Use
+
 If port 5000 is already in use, you can modify the port in `src/main.py`:
 
 ```python
@@ -154,19 +165,25 @@ PowerSupplyFrontPanel("power_supply_front_panel", self.protocol,
 ```
 
 ### CORS Issues
+
 CORS headers are automatically included in all responses. If you still experience issues, check:
+
 - Browser console for error messages
 - Application debug output
 - Firewall/proxy settings
 
 ### Connection Fails
+
 If "Connect" button fails:
+
 1. Check that visa_power_supply module started correctly
 2. Review application debug output
 3. Check system logs for error messages
 
 ### Measurements Not Updating
+
 If measurements don't auto-update:
+
 1. Ensure device is connected
 2. Check browser console for JavaScript errors
 3. Verify webserver is running (check terminal output)
