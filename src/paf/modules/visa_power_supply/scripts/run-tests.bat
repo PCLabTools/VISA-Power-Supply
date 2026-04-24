@@ -1,5 +1,5 @@
 @echo off
-echo Running unit tests for hello_world module...
+echo Running unit tests for visa_power_supply module...
 
 REM Change to the module directory
 cd /d "%~dp0.."

@@ -1,6 +1,6 @@
 """
 file: module.py
-description: HelloWorld example module
+description: This module is designed to run a basic webserver which serves a local webpage that allows for this module to interact with the VISAPowerSupply module through the PAF communication protocol.
 author: Your Name (your.email@example.com)
 """
 
@@ -9,9 +9,9 @@ from typing import Optional
 from paf.communication import Message, Protocol, Module
 
 
-class HelloWorld(Module):
+class PowerSupplyFrontPanel(Module):
     """
-    HelloWorld example module
+    This module is designed to run a basic webserver which serves a local webpage that allows for this module to interact with the VISAPowerSupply module through the PAF communication protocol.
     """
 
     def __init__(self, address: str, protocol: Protocol, debug: Optional[int] = 0):
@@ -35,8 +35,8 @@ class HelloWorld(Module):
             bool: True if the module should shutdown, False otherwise.
         """
         if self.debug: print(f"{self.__class__.__name__} ({self.address}): Handling message: {message}")
-        if message.command == "greet":
-            return self.greet(message)
+        if message.command == "custom_action":
+            return self.message_custom_action(message)
         return super().handle_message(message)
 
     def background_task(self):
@@ -46,8 +46,8 @@ class HelloWorld(Module):
             # TODO: implement background task logic
             sleep(1)
 
-    def greet(self, message: Message) -> bool:
-        """Handles the "greet" message.
+    def message_custom_action(self, message: Message) -> bool:
+        """Handles the "custom_action" message.
 
         Args:
             message (Message): Incoming message to handle.
@@ -55,6 +55,6 @@ class HelloWorld(Module):
         Returns:
             bool: False to indicate that the module should continue running.
         """
-        if self.debug: print(f"{self.__class__.__name__} ({self.address}): Handling greet message: {message}")
-        self.protocol.send_response(message, {"response": "Hello, World!"})
+        if self.debug: print(f"{self.__class__.__name__} ({self.address}): Handling custom action: {message}")
+        # TODO: implement custom action logic
         return False

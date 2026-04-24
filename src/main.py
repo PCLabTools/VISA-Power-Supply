@@ -5,7 +5,7 @@ author: Your Name (your.email@example.com)
 """
 
 from paf.communication import Message, Protocol
-from paf.modules import HelloWorld
+from paf.modules import PowerSupplyFrontPanel, VISAPowerSupply
 
 class Main:
     """
@@ -19,8 +19,8 @@ class Main:
         self.address = "main"
         self.protocol = Protocol(self.address)
 
-        # Register the HelloWorld module with the protocol
-        HelloWorld("hello_world", self.protocol, debug=self.debug)
+        PowerSupplyFrontPanel("power_supply_front_panel", self.protocol, debug=self.debug)
+        VISAPowerSupply("visa_power_supply", self.protocol, debug=self.debug, implementation_type="simulated")
 
     def __del__(self):
         """Clean up the main module by deleting the protocol instance.
@@ -32,14 +32,7 @@ class Main:
         """
         if self.debug: print(f"{self.__class__.__name__} ({self.address}): Starting main application loop.")
 
-        # Send a greeting message to the HelloWorld module and print the response
-        greeting = self.protocol.send_request("hello_world", "greet")
-
-        # Print the greeting response
-        print(f"Received greeting: {greeting['response']}")
-
-        # Send shutdown command to the HelloWorld module to stop its thread
-        self.protocol.send_action("hello_world", "shutdown")
+        self.protocol.send_action("visa_power_supply", "custom_action", {"data": "Main test action"})
 
         print(f"\033[92mMain application loop has started. Press Ctrl+C to exit.\033[0m")
 
