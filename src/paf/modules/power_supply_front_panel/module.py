@@ -48,7 +48,11 @@ class PowerSupplyRequestHandler(SimpleHTTPRequestHandler):
             if self.path.startswith('/api/power-supply/'):
                 command = self.path.split('/')[-1]
                 response = self.handle_power_supply_command(command, data)
-                self.send_json_response(response)
+                if isinstance(response, tuple):
+                    body, status_code = response
+                    self.send_json_response(body, status_code)
+                else:
+                    self.send_json_response(response)
             
             # Shutdown endpoint
             elif self.path == '/api/shutdown':
@@ -93,7 +97,12 @@ class PowerSupplyRequestHandler(SimpleHTTPRequestHandler):
                     data,
                     timeout=5
                 )
-                return response.payload if response else {"status": "ok"}
+                # Protocol.send_request returns payload data (dict) in this codebase.
+                if isinstance(response, dict):
+                    return response
+                if hasattr(response, "payload"):
+                    return response.payload
+                return {"status": "ok"}
             except TimeoutError:
                 return {"error": "Power supply module timeout"}, 504
         

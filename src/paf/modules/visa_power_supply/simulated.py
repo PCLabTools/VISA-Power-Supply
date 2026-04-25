@@ -29,6 +29,27 @@ class SimulatedVISAPowerSupply(BaseVISAPowerSupply):
         self.ovp_threshold = 15.0
         self.ocp_threshold = 5.0
         self.model_id = "SimulatedVISAPowerSupply-v1.0"
+        self.measurement_counter = 0
+        self.interaction_counter = 0
+
+    def _next_measurement_profile(self) -> tuple[float, float]:
+        """Return deterministic simulation factors for load and voltage drop."""
+        self.measurement_counter += 1
+        profile_index = (self.measurement_counter + self.interaction_counter) % 8
+
+        # Load factor cycles 35% -> 98% to emulate changing DUT demand.
+        load_factor = 0.35 + (profile_index * 0.09)
+        if load_factor > 0.98:
+            load_factor = 0.98
+
+        # Slight voltage sag under heavier load.
+        voltage_factor = 1.0 - (load_factor * 0.01)
+        return load_factor, voltage_factor
+
+    def _respond(self, message: Message, payload: dict) -> None:
+        """Send a response when the message is a request."""
+        if message.source:
+            self.protocol.send_response(message, payload)
 
     def background_task(self):
         """Simulated background task."""
@@ -48,9 +69,8 @@ class SimulatedVISAPowerSupply(BaseVISAPowerSupply):
         """
         if self.debug: print(f"{self.__class__.__name__} ({self.address}): Handling connect command: {message}")
         self.connected = True
-        # Send response if this is a request
-        if message.source:
-            self.protocol.send_response(message, {"status": "connected", "model": self.model_id})
+        self.interaction_counter += 1
+        self._respond(message, {"status": "connected", "model": self.model_id})
         return False
 
     def message_disconnect(self, message: Message) -> bool:
@@ -65,9 +85,8 @@ class SimulatedVISAPowerSupply(BaseVISAPowerSupply):
         if self.debug: print(f"{self.__class__.__name__} ({self.address}): Handling disconnect command: {message}")
         self.connected = False
         self.output_enabled = False
-        # Send response if this is a request
-        if message.source:
-            self.protocol.send_response(message, {"status": "disconnected"})
+        self.interaction_counter += 1
+        self._respond(message, {"status": "disconnected"})
         return False
 
     def message_identify(self, message: Message) -> bool:
@@ -80,14 +99,12 @@ class SimulatedVISAPowerSupply(BaseVISAPowerSupply):
             bool: False to continue running.
         """
         if self.debug: print(f"{self.__class__.__name__} ({self.address}): Handling identify command: {message}")
-        # Send response if this is a request
-        if message.source:
-            self.protocol.send_response(message, {
-                "model": self.model_id,
-                "connected": self.connected,
-                "voltage_range": [0.0, 30.0],
-                "current_range": [0.0, 5.0]
-            })
+        self._respond(message, {
+            "model": self.model_id,
+            "connected": self.connected,
+            "voltage_range": [0.0, 30.0],
+            "current_range": [0.0, 5.0],
+        })
         return False
 
     def message_set_voltage(self, message: Message) -> bool:
@@ -100,15 +117,16 @@ class SimulatedVISAPowerSupply(BaseVISAPowerSupply):
             bool: False to continue running.
         """
         if self.debug: print(f"{self.__class__.__name__} ({self.address}): Handling set_voltage command: {message}")
+        if not self.connected:
+            self._respond(message, {"error": "Power supply is not connected"})
+            return False
         try:
             voltage = message.payload.get("voltage", 0.0)
-            self.voltage = float(voltage)
-            # Send response if this is a request
-            if message.source:
-                self.protocol.send_response(message, {"voltage": self.voltage, "status": "ok"})
+            self.voltage = max(0.0, min(30.0, float(voltage)))
+            self.interaction_counter += 1
+            self._respond(message, {"voltage": self.voltage, "status": "ok"})
         except (TypeError, ValueError, AttributeError):
-            if message.source:
-                self.protocol.send_response(message, {"error": "Invalid voltage value"})
+            self._respond(message, {"error": "Invalid voltage value"})
         return False
 
     def message_set_current(self, message: Message) -> bool:
@@ -121,15 +139,16 @@ class SimulatedVISAPowerSupply(BaseVISAPowerSupply):
             bool: False to continue running.
         """
         if self.debug: print(f"{self.__class__.__name__} ({self.address}): Handling set_current command: {message}")
+        if not self.connected:
+            self._respond(message, {"error": "Power supply is not connected"})
+            return False
         try:
             current = message.payload.get("current", 0.0)
-            self.current = float(current)
-            # Send response if this is a request
-            if message.source:
-                self.protocol.send_response(message, {"current": self.current, "status": "ok"})
+            self.current = max(0.0, min(5.0, float(current)))
+            self.interaction_counter += 1
+            self._respond(message, {"current": self.current, "status": "ok"})
         except (TypeError, ValueError, AttributeError):
-            if message.source:
-                self.protocol.send_response(message, {"error": "Invalid current value"})
+            self._respond(message, {"error": "Invalid current value"})
         return False
 
     def message_toggle_output(self, message: Message) -> bool:
@@ -142,17 +161,18 @@ class SimulatedVISAPowerSupply(BaseVISAPowerSupply):
             bool: False to continue running.
         """
         if self.debug: print(f"{self.__class__.__name__} ({self.address}): Handling toggle_output command: {message}")
+        if not self.connected:
+            self._respond(message, {"error": "Power supply is not connected"})
+            return False
         try:
             if "enable" in message.payload:
                 self.output_enabled = bool(message.payload.get("enable"))
             else:
                 self.output_enabled = not self.output_enabled
-            # Send response if this is a request
-            if message.source:
-                self.protocol.send_response(message, {"output_enabled": self.output_enabled, "status": "ok"})
+            self.interaction_counter += 1
+            self._respond(message, {"output_enabled": self.output_enabled, "status": "ok"})
         except (TypeError, ValueError, AttributeError):
-            if message.source:
-                self.protocol.send_response(message, {"error": "Invalid output command"})
+            self._respond(message, {"error": "Invalid output command"})
         return False
 
     def message_set_ovp(self, message: Message) -> bool:
@@ -165,15 +185,16 @@ class SimulatedVISAPowerSupply(BaseVISAPowerSupply):
             bool: False to continue running.
         """
         if self.debug: print(f"{self.__class__.__name__} ({self.address}): Handling set_ovp command: {message}")
+        if not self.connected:
+            self._respond(message, {"error": "Power supply is not connected"})
+            return False
         try:
             ovp = message.payload.get("threshold", 15.0)
-            self.ovp_threshold = float(ovp)
-            # Send response if this is a request
-            if message.source:
-                self.protocol.send_response(message, {"ovp_threshold": self.ovp_threshold, "status": "ok"})
+            self.ovp_threshold = max(0.0, min(30.0, float(ovp)))
+            self.interaction_counter += 1
+            self._respond(message, {"ovp_threshold": self.ovp_threshold, "status": "ok"})
         except (TypeError, ValueError, AttributeError):
-            if message.source:
-                self.protocol.send_response(message, {"error": "Invalid OVP value"})
+            self._respond(message, {"error": "Invalid OVP value"})
         return False
 
     def message_set_ocp(self, message: Message) -> bool:
@@ -186,15 +207,16 @@ class SimulatedVISAPowerSupply(BaseVISAPowerSupply):
             bool: False to continue running.
         """
         if self.debug: print(f"{self.__class__.__name__} ({self.address}): Handling set_ocp command: {message}")
+        if not self.connected:
+            self._respond(message, {"error": "Power supply is not connected"})
+            return False
         try:
             ocp = message.payload.get("threshold", 5.0)
-            self.ocp_threshold = float(ocp)
-            # Send response if this is a request
-            if message.source:
-                self.protocol.send_response(message, {"ocp_threshold": self.ocp_threshold, "status": "ok"})
+            self.ocp_threshold = max(0.0, min(5.0, float(ocp)))
+            self.interaction_counter += 1
+            self._respond(message, {"ocp_threshold": self.ocp_threshold, "status": "ok"})
         except (TypeError, ValueError, AttributeError):
-            if message.source:
-                self.protocol.send_response(message, {"error": "Invalid OCP value"})
+            self._respond(message, {"error": "Invalid OCP value"})
         return False
 
     def message_measure(self, message: Message) -> bool:
@@ -207,16 +229,67 @@ class SimulatedVISAPowerSupply(BaseVISAPowerSupply):
             bool: False to continue running.
         """
         if self.debug: print(f"{self.__class__.__name__} ({self.address}): Handling measure command: {message}")
-        # Calculate simulated power
-        power = self.voltage * self.current if self.output_enabled else 0.0
-        # Send response if this is a request
-        if message.source:
-            self.protocol.send_response(message, {
-                "voltage": self.voltage,
-                "current": self.current,
-                "power": power,
-                "output_enabled": self.output_enabled
+        if not self.connected:
+            self._respond(message, {
+                "status": "not_connected",
+                "connected": False,
+                "output_enabled": False,
+                "voltage": 0.0,
+                "current": 0.0,
+                "power": 0.0,
+                "set_voltage": self.voltage,
+                "set_current": self.current,
             })
+            return False
+
+        if not self.output_enabled:
+            self._respond(message, {
+                "status": "output_off",
+                "connected": True,
+                "output_enabled": False,
+                "voltage": 0.0,
+                "current": 0.0,
+                "power": 0.0,
+                "set_voltage": self.voltage,
+                "set_current": self.current,
+            })
+            return False
+
+        load_factor, voltage_factor = self._next_measurement_profile()
+        measured_voltage = round(self.voltage * voltage_factor, 4)
+        measured_current = round(self.current * load_factor, 4)
+        measured_power = round(measured_voltage * measured_current, 4)
+
+        # Simulate protection trip behavior.
+        if measured_voltage > self.ovp_threshold or measured_current > self.ocp_threshold:
+            self.output_enabled = False
+            self._respond(message, {
+                "status": "protection_tripped",
+                "connected": True,
+                "output_enabled": False,
+                "voltage": 0.0,
+                "current": 0.0,
+                "power": 0.0,
+                "set_voltage": self.voltage,
+                "set_current": self.current,
+                "ovp_threshold": self.ovp_threshold,
+                "ocp_threshold": self.ocp_threshold,
+            })
+            return False
+
+        self._respond(message, {
+            "status": "ok",
+            "connected": True,
+            "output_enabled": True,
+            "voltage": measured_voltage,
+            "current": measured_current,
+            "power": measured_power,
+            "set_voltage": self.voltage,
+            "set_current": self.current,
+            "ovp_threshold": self.ovp_threshold,
+            "ocp_threshold": self.ocp_threshold,
+            "load_factor": round(load_factor, 4),
+        })
         return False
 
     def message_custom_action(self, message: Message) -> bool:

@@ -217,6 +217,65 @@ class TestVISAPowerSupply(unittest.TestCase):
             time.sleep(0.2)
             self.assertFalse(module.background_task_running, f"Background task should be stopped on iteration {i}")
 
+    def test_measure_reports_not_connected_when_disconnected(self):
+        module = VISAPowerSupply("test_visa_power_supply", self.protocol, debug=0)
+        self.created_modules.append(module)
+
+        response = self.protocol.send_request("test_visa_power_supply", "measure", timeout=1.0)
+
+        self.assertEqual(response["status"], "not_connected")
+        self.assertFalse(response["connected"])
+        self.assertEqual(response["voltage"], 0.0)
+        self.assertEqual(response["current"], 0.0)
+        self.assertEqual(response["power"], 0.0)
+
+    def test_measure_reports_output_off_when_connected_but_disabled(self):
+        module = VISAPowerSupply("test_visa_power_supply", self.protocol, debug=0)
+        self.created_modules.append(module)
+
+        self.protocol.send_request("test_visa_power_supply", "connect", timeout=1.0)
+        response = self.protocol.send_request("test_visa_power_supply", "measure", timeout=1.0)
+
+        self.assertEqual(response["status"], "output_off")
+        self.assertTrue(response["connected"])
+        self.assertFalse(response["output_enabled"])
+        self.assertEqual(response["power"], 0.0)
+
+    def test_measure_returns_simulated_values_when_output_enabled(self):
+        module = VISAPowerSupply("test_visa_power_supply", self.protocol, debug=0)
+        self.created_modules.append(module)
+
+        self.protocol.send_request("test_visa_power_supply", "connect", timeout=1.0)
+        self.protocol.send_request("test_visa_power_supply", "set_voltage", {"voltage": 12.0}, timeout=1.0)
+        self.protocol.send_request("test_visa_power_supply", "set_current", {"current": 2.0}, timeout=1.0)
+        self.protocol.send_request("test_visa_power_supply", "toggle_output", {"enable": True}, timeout=1.0)
+        response = self.protocol.send_request("test_visa_power_supply", "measure", timeout=1.0)
+
+        self.assertEqual(response["status"], "ok")
+        self.assertTrue(response["connected"])
+        self.assertTrue(response["output_enabled"])
+        self.assertGreater(response["voltage"], 0.0)
+        self.assertGreater(response["current"], 0.0)
+        self.assertGreater(response["power"], 0.0)
+        self.assertLessEqual(response["voltage"], 12.0)
+        self.assertLessEqual(response["current"], 2.0)
+
+    def test_measure_trips_protection_when_limits_exceeded(self):
+        module = VISAPowerSupply("test_visa_power_supply", self.protocol, debug=0)
+        self.created_modules.append(module)
+
+        self.protocol.send_request("test_visa_power_supply", "connect", timeout=1.0)
+        self.protocol.send_request("test_visa_power_supply", "set_voltage", {"voltage": 10.0}, timeout=1.0)
+        self.protocol.send_request("test_visa_power_supply", "set_current", {"current": 1.0}, timeout=1.0)
+        self.protocol.send_request("test_visa_power_supply", "set_ovp", {"threshold": 5.0}, timeout=1.0)
+        self.protocol.send_request("test_visa_power_supply", "toggle_output", {"enable": True}, timeout=1.0)
+
+        response = self.protocol.send_request("test_visa_power_supply", "measure", timeout=1.0)
+
+        self.assertEqual(response["status"], "protection_tripped")
+        self.assertFalse(response["output_enabled"])
+        self.assertEqual(response["power"], 0.0)
+
 
 if __name__ == '__main__':
     unittest.main()
