@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VISA Power Supply Control Panel</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20260426-1">
 </head>
 <body>
     <div class="container">
@@ -119,6 +119,7 @@
             <section class="control-section bottom-section">
                 <h2>System Control</h2>
                 <div class="button-group">
+                    <button id="reset-btn" class="btn btn-warning" onclick="resetPowerSupply()" disabled>Reset Power Supply</button>
                     <button class="btn btn-warning" onclick="showLogs()">View Logs</button>
                     <button class="btn btn-danger" onclick="shutdownApplication()">Shutdown Application</button>
                 </div>
@@ -134,8 +135,21 @@
                 <button class="btn btn-primary" onclick="closeLogs()">Close</button>
             </div>
         </div>
+
+        <!-- Instrument Error Modal -->
+        <div id="error-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeInstrumentErrorModal()">&times;</span>
+                <h2>Instrument Error</h2>
+                <div class="error-modal-body">
+                    <p>The instrument reported the following error:</p>
+                    <div id="error-message" class="error-message"></div>
+                </div>
+                <button class="btn btn-danger" onclick="closeInstrumentErrorModal()">Acknowledge</button>
+            </div>
+        </div>
     </div>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=20260426-1"></script>
 </body>
 </html>

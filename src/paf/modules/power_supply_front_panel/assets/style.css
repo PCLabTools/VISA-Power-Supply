@@ -419,6 +419,32 @@ input[type="number"]:focus {
     color: var(--warning-color);
 }
 
+.error-modal-body {
+    background: var(--light-color);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--danger-color);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.error-modal-body p {
+    margin-bottom: 12px;
+    color: var(--dark-color);
+    font-weight: 600;
+}
+
+.error-message {
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.95em;
+    color: var(--danger-color);
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 12px;
+    word-break: break-word;
+}
+
 /* Animations */
 @keyframes fadeIn {
     from {

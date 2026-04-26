@@ -6,12 +6,14 @@ const LOG_LIMIT = 100;
 let appState = {
     connected: false,
     outputEnabled: false,
-    logs: []
+    logs: [],
+    errorDialogActive: false
 };
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Power Supply Control Panel initialized');
+    updateConnectionStatus(false);
     addLog('System', 'Power Supply Control Panel loaded', 'success');
     startPeriodicMeasurements();
 });
@@ -40,6 +42,7 @@ function updateConnectionStatus(connected) {
     const connectBtn = document.getElementById('connect-btn');
     const disconnectBtn = document.getElementById('disconnect-btn');
     const identifyBtn = document.getElementById('identify-btn');
+    const resetBtn = document.getElementById('reset-btn');
     const outputBtns = document.querySelectorAll('#output-on-btn, #output-off-btn, #measure-btn');
     
     if (connected) {
@@ -48,6 +51,7 @@ function updateConnectionStatus(connected) {
         connectBtn.disabled = true;
         disconnectBtn.disabled = false;
         identifyBtn.disabled = false;
+        resetBtn.disabled = false;
         outputBtns.forEach(btn => btn.disabled = false);
         addLog('System', 'Power supply connected', 'success');
     } else {
@@ -56,6 +60,7 @@ function updateConnectionStatus(connected) {
         connectBtn.disabled = false;
         disconnectBtn.disabled = true;
         identifyBtn.disabled = true;
+        resetBtn.disabled = true;
         outputBtns.forEach(btn => btn.disabled = true);
         appState.outputEnabled = false;
         updateOutputStatus(false);
@@ -218,6 +223,70 @@ function disableOutput() {
         });
 }
 
+function resetPowerSupply() {
+    addLog('Command', 'Resetting power supply...', 'warning');
+
+    sendCommand('reset', {})
+        .then(response => {
+            // Reset UI controls to safe defaults after instrument reset.
+            document.getElementById('voltage-slider').value = 0;
+            document.getElementById('voltage-input').value = 0;
+            document.getElementById('current-slider').value = 0;
+            document.getElementById('current-input').value = 0;
+            document.getElementById('ovp-input').value = 15;
+            document.getElementById('ocp-input').value = 5;
+            updateVoltageDisplay();
+            updateCurrentDisplay();
+            updateOutputStatus(false);
+            document.getElementById('meas-voltage').textContent = '0.00 V';
+            document.getElementById('meas-current').textContent = '0.00 A';
+            document.getElementById('meas-power').textContent = '0.00 W';
+
+            addLog('Command', 'Power supply reset completed', 'success');
+            addLog('Reset', JSON.stringify(response), 'info');
+        })
+        .catch(error => {
+            addLog('Error', 'Failed to reset power supply: ' + error.message, 'error');
+        });
+}
+
+function showInstrumentErrorDialog(response) {
+    if (appState.errorDialogActive) {
+        return;
+    }
+
+    const errorText = response.error || 'Unknown instrument error';
+    appState.errorDialogActive = true;
+    addLog('Instrument Error', errorText, 'error');
+
+    const errorMessage = document.getElementById('error-message');
+    const errorModal = document.getElementById('error-modal');
+    errorMessage.textContent = errorText;
+    errorModal.classList.add('show');
+}
+
+function closeInstrumentErrorModal() {
+    const errorModal = document.getElementById('error-modal');
+    errorModal.classList.remove('show');
+    appState.errorDialogActive = false;
+}
+
+function pollInstrumentErrors() {
+    if (!appState.connected) {
+        return;
+    }
+
+    sendCommand('error_query', {})
+        .then(response => {
+            if (response && response.error && response.error !== '0,No error') {
+                showInstrumentErrorDialog(response);
+            }
+        })
+        .catch(error => {
+            addLog('Error', 'Failed to query instrument errors: ' + error.message, 'error');
+        });
+}
+
 function setOVP() {
     const threshold = parseFloat(document.getElementById('ovp-input').value);
     addLog('Command', `Setting OVP to ${threshold} V`, 'info');
@@ -272,6 +341,8 @@ function startPeriodicMeasurements() {
                 .catch(error => {
                     // Silent fail for periodic measurements
                 });
+
+            pollInstrumentErrors();
         }
     }, 2000);
 }
@@ -318,8 +389,14 @@ function shutdownApplication() {
 
 // Close modal when clicking outside of it
 window.onclick = function(event) {
-    const modal = document.getElementById('log-modal');
-    if (event.target === modal) {
-        modal.classList.remove('show');
+    const logModal = document.getElementById('log-modal');
+    const errorModal = document.getElementById('error-modal');
+
+    if (event.target === logModal) {
+        logModal.classList.remove('show');
+    }
+
+    if (event.target === errorModal) {
+        closeInstrumentErrorModal();
     }
 }

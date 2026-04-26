@@ -84,6 +84,8 @@ class PowerSupplyRequestHandler(SimpleHTTPRequestHandler):
                 'set_ovp': 'set_ovp',
                 'set_ocp': 'set_ocp',
                 'measure': 'measure',
+                'reset': 'reset',
+                'error_query': 'error_query',
             }
             
             if command not in command_map:

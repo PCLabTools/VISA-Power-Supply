@@ -98,6 +98,10 @@ class BaseVISAPowerSupply(Module, ABC):
             return self.message_set_ocp(message)
         elif message.command == "measure":
             return self.message_measure(message)
+        elif message.command == "reset":
+            return self.message_reset(message)
+        elif message.command == "error_query":
+            return self.message_error_query(message)
         elif message.command == "custom_action":
             return self.message_custom_action(message)
         return super().handle_message(message)
@@ -211,6 +215,30 @@ class BaseVISAPowerSupply(Module, ABC):
             bool: False to continue running.
         """
         raise NotImplementedError("message_measure must be implemented by subclasses")
+
+    @abstractmethod
+    def message_reset(self, message: Message) -> bool:
+        """Handle the "reset" command - reset instrument operating state.
+
+        Args:
+            message (Message): Incoming message.
+
+        Returns:
+            bool: False to continue running.
+        """
+        raise NotImplementedError("message_reset must be implemented by subclasses")
+
+    @abstractmethod
+    def message_error_query(self, message: Message) -> bool:
+        """Handle the "error_query" command - query instrument error state.
+
+        Args:
+            message (Message): Incoming message.
+
+        Returns:
+            bool: False to continue running.
+        """
+        raise NotImplementedError("message_error_query must be implemented by subclasses")
 
     @abstractmethod
     def background_task(self):

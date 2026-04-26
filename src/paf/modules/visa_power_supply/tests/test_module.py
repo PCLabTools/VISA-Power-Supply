@@ -50,6 +50,12 @@ class DummyVISAPowerSupply(BaseVISAPowerSupply):
     def message_measure(self, message: Message) -> bool:
         return False
 
+    def message_reset(self, message: Message) -> bool:
+        return False
+
+    def message_error_query(self, message: Message) -> bool:
+        return False
+
     def message_custom_action(self, message: Message) -> bool:
         return False
 
@@ -275,6 +281,52 @@ class TestVISAPowerSupply(unittest.TestCase):
         self.assertEqual(response["status"], "protection_tripped")
         self.assertFalse(response["output_enabled"])
         self.assertEqual(response["power"], 0.0)
+
+    def test_reset_restores_default_operating_state(self):
+        module = VISAPowerSupply("test_visa_power_supply", self.protocol, debug=0)
+        self.created_modules.append(module)
+
+        self.protocol.send_request("test_visa_power_supply", "connect", timeout=1.0)
+        self.protocol.send_request("test_visa_power_supply", "set_voltage", {"voltage": 24.0}, timeout=1.0)
+        self.protocol.send_request("test_visa_power_supply", "set_current", {"current": 3.0}, timeout=1.0)
+        self.protocol.send_request("test_visa_power_supply", "set_ovp", {"threshold": 20.0}, timeout=1.0)
+        self.protocol.send_request("test_visa_power_supply", "set_ocp", {"threshold": 2.0}, timeout=1.0)
+        self.protocol.send_request("test_visa_power_supply", "toggle_output", {"enable": True}, timeout=1.0)
+
+        reset_response = self.protocol.send_request("test_visa_power_supply", "reset", timeout=1.0)
+        measure_response = self.protocol.send_request("test_visa_power_supply", "measure", timeout=1.0)
+
+        self.assertEqual(reset_response["status"], "ok")
+        self.assertFalse(reset_response["output_enabled"])
+        self.assertEqual(measure_response["status"], "output_off")
+        self.assertEqual(measure_response["set_voltage"], 0.0)
+        self.assertEqual(measure_response["set_current"], 0.0)
+
+    def test_error_query_returns_no_error_by_default(self):
+        module = VISAPowerSupply("test_visa_power_supply", self.protocol, debug=0)
+        self.created_modules.append(module)
+
+        response = self.protocol.send_request("test_visa_power_supply", "error_query", timeout=1.0)
+
+        self.assertEqual(response["status"], "ok")
+        self.assertEqual(response["error"], "0,No error")
+        self.assertEqual(response["queue_depth"], 0)
+
+    def test_error_query_returns_and_clears_oldest_error(self):
+        module = VISAPowerSupply("test_visa_power_supply", self.protocol, debug=0)
+        self.created_modules.append(module)
+
+        # Generates a simulated error while disconnected.
+        self.protocol.send_request("test_visa_power_supply", "set_voltage", {"voltage": 5.0}, timeout=1.0)
+
+        first_query = self.protocol.send_request("test_visa_power_supply", "error_query", timeout=1.0)
+        second_query = self.protocol.send_request("test_visa_power_supply", "error_query", timeout=1.0)
+
+        self.assertEqual(first_query["status"], "error")
+        self.assertIn("Power supply is not connected", first_query["error"])
+        self.assertEqual(first_query["queue_depth"], 0)
+        self.assertEqual(second_query["status"], "ok")
+        self.assertEqual(second_query["error"], "0,No error")
 
 
 if __name__ == '__main__':
