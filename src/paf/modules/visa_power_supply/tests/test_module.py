@@ -56,6 +56,9 @@ class DummyVISAPowerSupply(BaseVISAPowerSupply):
     def message_error_query(self, message: Message) -> bool:
         return False
 
+    def message_list_resources(self, message: Message) -> bool:
+        return False
+
     def message_custom_action(self, message: Message) -> bool:
         return False
 

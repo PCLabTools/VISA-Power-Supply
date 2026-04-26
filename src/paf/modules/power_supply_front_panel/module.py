@@ -86,6 +86,7 @@ class PowerSupplyRequestHandler(SimpleHTTPRequestHandler):
                 'measure': 'measure',
                 'reset': 'reset',
                 'error_query': 'error_query',
+                'list_resources': 'list_resources',
             }
             
             if command not in command_map:

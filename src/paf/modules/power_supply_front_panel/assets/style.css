@@ -269,6 +269,45 @@ input[type="number"]:focus {
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
 }
 
+/* Resource selector row */
+.resource-input-group {
+    flex-wrap: wrap;
+}
+
+.resource-input-group select {
+    flex: 1;
+    min-width: 180px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1em;
+    background: white;
+    transition: var(--transition);
+}
+
+.resource-input-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.resource-input-group input[type="text"] {
+    flex: 2;
+    min-width: 260px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-family: monospace;
+    transition: var(--transition);
+}
+
+.resource-input-group input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
 .unit {
     font-weight: 600;
     color: var(--secondary-color);

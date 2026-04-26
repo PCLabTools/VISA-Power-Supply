@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VISA Power Supply Control Panel</title>
-    <link rel="stylesheet" href="style.css?v=20260426-1">
+    <link rel="stylesheet" href="style.css?v=20260426-2">
 </head>
 <body>
     <div class="container">
@@ -26,6 +26,16 @@
             <!-- Connection Section -->
             <section class="control-section">
                 <h2>Connection</h2>
+                <div class="control-group">
+                    <label for="resource-select">VISA Resource:</label>
+                    <div class="input-group resource-input-group">
+                        <select id="resource-select" onchange="onResourceSelectChange()">
+                            <option value="" disabled selected>— scan or enter a resource —</option>
+                        </select>
+                        <input type="text" id="resource-manual" placeholder="e.g. ASRL3::INSTR or TCPIP0::192.168.1.1::inst0::INSTR" autocomplete="off">
+                        <button class="btn btn-info" id="scan-btn" onclick="scanResources()">Scan</button>
+                    </div>
+                </div>
                 <div class="button-group">
                     <button id="connect-btn" class="btn btn-primary" onclick="connectPowerSupply()">Connect</button>
                     <button id="disconnect-btn" class="btn btn-secondary" onclick="disconnectPowerSupply()" disabled>Disconnect</button>
@@ -150,6 +160,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=20260426-1"></script>
+    <script src="app.js?v=20260426-2"></script>
 </body>
 </html>

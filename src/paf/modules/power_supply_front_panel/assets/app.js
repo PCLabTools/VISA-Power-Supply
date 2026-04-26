@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateConnectionStatus(false);
     addLog('System', 'Power Supply Control Panel loaded', 'success');
     startPeriodicMeasurements();
+    scanResources();
 });
 
 // Utility functions
@@ -121,10 +122,67 @@ function sendCommand(command, data = {}) {
 }
 
 // Power Supply Commands
-function connectPowerSupply() {
-    addLog('Command', 'Connecting to power supply...', 'info');
-    sendCommand('connect', {})
+function scanResources() {
+    const scanBtn = document.getElementById('scan-btn');
+    const select = document.getElementById('resource-select');
+    scanBtn.disabled = true;
+    scanBtn.textContent = 'Scanning...';
+    addLog('Command', 'Scanning for VISA resources...', 'info');
+
+    sendCommand('list_resources', {})
         .then(response => {
+            const resources = response.resources || [];
+            // Preserve any manually entered value.
+            const currentManual = document.getElementById('resource-manual').value.trim();
+            // Rebuild options.
+            select.innerHTML = '<option value="" disabled>— select a resource —</option>';
+            resources.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r;
+                opt.textContent = r;
+                select.appendChild(opt);
+            });
+            if (resources.length > 0) {
+                // Auto-select first resource if manual field is empty.
+                if (!currentManual) {
+                    select.value = resources[0];
+                    document.getElementById('resource-manual').value = resources[0];
+                }
+                addLog('Scan', `Found ${resources.length} resource(s): ${resources.join(', ')}`, 'success');
+            } else {
+                addLog('Scan', 'No VISA resources found', 'warning');
+            }
+        })
+        .catch(error => {
+            addLog('Error', 'Resource scan failed: ' + error.message, 'error');
+        })
+        .finally(() => {
+            scanBtn.disabled = false;
+            scanBtn.textContent = 'Scan';
+        });
+}
+
+function onResourceSelectChange() {
+    const select = document.getElementById('resource-select');
+    const manual = document.getElementById('resource-manual');
+    if (select.value) {
+        manual.value = select.value;
+    }
+}
+
+function connectPowerSupply() {
+    const resource = document.getElementById('resource-manual').value.trim();
+    if (!resource) {
+        addLog('Error', 'No VISA resource selected. Use Scan or enter one manually.', 'error');
+        return;
+    }
+    addLog('Command', `Connecting to ${resource}...`, 'info');
+    sendCommand('connect', { resource })
+        .then(response => {
+            if (response.error) {
+                addLog('Error', 'Connection failed: ' + response.error, 'error');
+                return;
+            }
             updateConnectionStatus(true);
             addLog('Command', 'Connected: ' + JSON.stringify(response), 'success');
         })

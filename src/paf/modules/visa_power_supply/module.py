@@ -102,6 +102,8 @@ class BaseVISAPowerSupply(Module, ABC):
             return self.message_reset(message)
         elif message.command == "error_query":
             return self.message_error_query(message)
+        elif message.command == "list_resources":
+            return self.message_list_resources(message)
         elif message.command == "custom_action":
             return self.message_custom_action(message)
         return super().handle_message(message)
@@ -239,6 +241,18 @@ class BaseVISAPowerSupply(Module, ABC):
             bool: False to continue running.
         """
         raise NotImplementedError("message_error_query must be implemented by subclasses")
+
+    @abstractmethod
+    def message_list_resources(self, message: Message) -> bool:
+        """Handle the "list_resources" command - enumerate available VISA resource strings.
+
+        Args:
+            message (Message): Incoming message.
+
+        Returns:
+            bool: False to continue running.
+        """
+        raise NotImplementedError("message_list_resources must be implemented by subclasses")
 
     @abstractmethod
     def background_task(self):

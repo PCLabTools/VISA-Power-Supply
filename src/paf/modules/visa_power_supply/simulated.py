@@ -5,6 +5,7 @@ author: Your Name (your.email@example.com)
 """
 
 from time import sleep
+import random
 from paf.communication import Message
 from .module import VISAPowerSupply, BaseVISAPowerSupply
 
@@ -76,9 +77,10 @@ class SimulatedVISAPowerSupply(BaseVISAPowerSupply):
             bool: False to continue running.
         """
         if self.debug: print(f"{self.__class__.__name__} ({self.address}): Handling connect command: {message}")
+        resource = (message.payload or {}).get("resource", "SIMULATED::INSTR")
         self.connected = True
         self.interaction_counter += 1
-        self._respond(message, {"status": "connected", "model": self.model_id})
+        self._respond(message, {"status": "connected", "model": self.model_id, "resource": resource})
         return False
 
     def message_disconnect(self, message: Message) -> bool:
@@ -317,6 +319,23 @@ class SimulatedVISAPowerSupply(BaseVISAPowerSupply):
             "ocp_threshold": self.ocp_threshold,
             "load_factor": round(load_factor, 4),
         })
+        return False
+
+    def message_list_resources(self, message: Message) -> bool:
+        """Handle the "list_resources" command - return a list of simulated VISA resource strings."""
+        if self.debug:
+            print(f"{self.__class__.__name__} ({self.address}): Handling list_resources command: {message}")
+        # Generate a small set of plausible-looking VISA resource strings so the
+        # UI has something to display without a real instrument attached.
+        com_ports = random.sample(range(1, 20), 3)
+        com_ports.sort()
+        octet = random.randint(10, 99)
+        resources = [
+            f"ASRL{com_ports[0]}::INSTR",
+            f"ASRL{com_ports[1]}::INSTR",
+            f"TCPIP0::192.168.1.{octet}::inst0::INSTR",
+        ]
+        self._respond(message, {"resources": resources})
         return False
 
     def message_reset(self, message: Message) -> bool:

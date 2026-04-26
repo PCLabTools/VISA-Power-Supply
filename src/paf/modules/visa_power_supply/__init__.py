@@ -6,5 +6,6 @@ author: Your Name (your.email@example.com)
 
 from .module import VISAPowerSupply, BaseVISAPowerSupply
 from .simulated import SimulatedVISAPowerSupply
+from .scpi import SCPIVISAPowerSupply
 
-__all__ = ["VISAPowerSupply", "BaseVISAPowerSupply", "SimulatedVISAPowerSupply"]
+__all__ = ["VISAPowerSupply", "BaseVISAPowerSupply", "SimulatedVISAPowerSupply", "SCPIVISAPowerSupply"]
